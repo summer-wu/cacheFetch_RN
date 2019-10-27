@@ -9,6 +9,9 @@
 
 
 ```js
+
+// import { AsyncStorage } from 'react-native';
+// import AsyncStorage from '@react-native-community/async-storage';
 import {clearFetchCache, makeCacheFetch} from 'cachefetch_rn';
 
 const cacheFetch = makeCacheFetch(AsyncStorage);

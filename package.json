@@ -1,17 +1,20 @@
 {
-  "name": "cacheFetch_RN",
-  "version": "0.0.1",
+  "name": "cachefetch_rn",
+  "version": "0.0.2",
   "description": "using AsyncStorage to cache fetch's response,only for RN,not for browser",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/DannyEdwards/client-cache-fetch.git"
+    "url": "git+ssh@github.com:summer-wu/cacheFetch_RN.git"
   },
-  "license": "GNU",
+  "main": "index.js",
+  "license": "GPL",
   "keywords": [
     "cache",
     "fetch",
     "react-native"
   ],
+  "author": "summer_wu",
+  "homepage": "https://github.com/summer-wu/cacheFetch_RN",
   "dependencies": {
     "lodash": "^4.17.4",
     "hash-sum": "^2.0.0"
