@@ -1,4 +1,4 @@
-# cacheFetch_RN
+# cachefetch_rn
 
 + configurable cacheFetch for react-native,using AsyncStorage to cache 
 + cacheFetch inherits the same API as [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch)
@@ -9,7 +9,7 @@
 
 
 ```js
-import {clearFetchCache, makeCacheFetch} from 'cacheFetch_RN';
+import {clearFetchCache, makeCacheFetch} from 'cachefetch_rn';
 
 const cacheFetch = makeCacheFetch(AsyncStorage);
 // or const cacheFetch = makeCacheFetch(AsyncStorage,veto,logger);
