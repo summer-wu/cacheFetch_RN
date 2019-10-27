@@ -9,23 +9,22 @@
 
 
 ```js
+import { AsyncStorage } from 'react-native';
+import { clearFetchCache, makeCacheFetch } from 'cachefetch_rn';
 
-// import { AsyncStorage } from 'react-native';
-// import AsyncStorage from '@react-native-community/async-storage';
-import {clearFetchCache, makeCacheFetch} from 'cachefetch_rn';
-
-const cacheFetch = makeCacheFetch(AsyncStorage);
-// or const cacheFetch = makeCacheFetch(AsyncStorage,veto,logger);
-
-cacheFetch("https://www.google.com", {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'text/json'
-  }
-}).then(response => response.text())
-.then(text=>alert(text.substr(0,100)))
-.catch(e => {
-  alert('fetch catch fail' + e);
+const headersPopulator = (headers) => {
+  //headers is a plain object
+  console.log('before populate', headers);
+  delete headers['Fc-Csrf'];
+  delete headers['Cookie'];
+  console.log('after populate', headers);
+  return headers;
+};
+const cacheFetch = makeCacheFetch({
+  AsyncStorage: AsyncStorage,
+  fetch: global.fetch,
+  headersPopulator: headersPopulator,
+  logger0: console,
 });
 ```
 
