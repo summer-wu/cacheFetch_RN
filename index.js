@@ -6,12 +6,13 @@ import _ from 'lodash';
 import sum from 'hash-sum';
 
 let AsyncStorage = null;
-let logger = null;
+let GLogger = null;
+let GEventListener = null; //接受两个参数 (eventName,vars)
 
 //CacheKeysList is used to track all keys，it is useful when clear cache
 const KEY_fetchCacheKeysList = 'KEY_fetchCacheKeysList';
-const EVENT_WILL_saveCacheKeysList = 'EVENT_WILL_saveCacheKeysList'
-const EVENT_DID_saveCacheKeysList= 'EVENT_DID_saveCacheKeysList'
+
+const EVENT_WILL_saveCache = 'EVENT_WILL_saveCache'
 const EVENT_WILL_calcCacheKey= 'EVENT_WILL_calcCacheKey'
 const EVENT_DID_calcCacheKey= 'EVENT_DID_calcCacheKey'
 const EVENT_GOTCACHE_WILL_Resolve = 'EVENT_GOTCACHE_WILL_Resolve'
@@ -80,8 +81,9 @@ const Converter = {
     assert(_.isObject(response));
     const clonedOne = response.clone();
     const text = await clonedOne.text(); //may throw in text()
+    const url = response.url;
     const headersObj = Converter.objectFromHeaders(response.headers);
-    const responseObj = { text, headersObj };
+    const responseObj = { url,text, headersObj };
 
     const responseStr = JSON.stringify(responseObj);
     return responseStr;
@@ -119,6 +121,7 @@ function replaceAll(target, str, newstr) {
 function calcCacheKey(input, init): string {
   assert(_.isObject(init));
   assert(_.isString(input));
+  GEventListener(EVENT_WILL_calcCacheKey,{input,init});
   const method = _.get(init, 'method', 'GET');
   const headers = _.get(init, 'headers');
   let headersSum = null;
@@ -139,6 +142,8 @@ function calcCacheKey(input, init): string {
   const body = _.get(init, 'body');
   const url = replaceAll(input,'/','!')
   const key = `${method}_${url}_${headersSum}_${sum(body)}`;
+  GEventListener(EVENT_DID_calcCacheKey,{input,init,key});
+
   return key;
 }
 
@@ -163,6 +168,7 @@ async function saveCacheWithKeyValue(key, value) {
   assert(_.isString(value));
 
   try {
+    GEventListener(EVENT_WILL_saveCache,{key,value})
     await AsyncStorage.setItem(key, value);
     await CacheKeysListManager.updateCacheKeysList('append', key);
     log(`saveCacheWithKeyValue key=${key} success`);
@@ -174,7 +180,7 @@ async function saveCacheWithKeyValue(key, value) {
 function log(...msg) {
   const prefix = 'cacheFetch_RN ';
   const msgStr = prefix + msg.join(' ');
-  logger.log(msgStr);
+  GLogger.log(msgStr);
 }
 
 // cacheFetch is just a enhanced fetch,it's signature is same with fetch：Promise<Response> fetch(input[, init]);
@@ -195,7 +201,7 @@ function cacheFetch(input, init = {}): Promise {
     log('cache exists,cacheKey=' + cacheKey);
     return new Promise((resolve, reject) => {
       getCacheValueWithKey(cacheKey).then((cacheValue) => {
-        // EVENT_GOTCACHE_WILL_Resolve
+        GEventListener(EVENT_GOTCACHE_WILL_Resolve,{input,init,cacheKey,cacheValue});
         const response = Converter.responseFromString(cacheValue);
         resolve(response);
       });
@@ -206,7 +212,7 @@ function cacheFetch(input, init = {}): Promise {
     log('cache not exists! cacheKey=' + cacheKey);
     return cacheFetch.fetch(input, init).then((response) => {
       if (response.ok) {
-        // EVENT_GOTNetwork_WILL_SaveCache
+        GEventListener(EVENT_GOTNetwork_WILL_SaveCache,{input,init,response});
         Converter.stringFromReponse(response)
           .then((responseStr) => {
             saveCacheWithKeyValue(cacheKey, responseStr);
@@ -246,23 +252,26 @@ const defaultHeadersPopulator = (headers) => {
 // headersPopulator is only used when calcCacheKey
 // veto is a function: boolean veto(input,init)，return true means allow using cache，false means do not allow using cache
 // logger0 is a object,it contains a log function，defaults to console
+// eventListener will be notified when event occur
 // return a function called cacheFetch
 export function makeCacheFetch({
                                  AsyncStorage,
                                  fetch,
                                  headersPopulator = defaultHeadersPopulator,
                                  veto = defaultVeto,
-                                 logger0 = console,
+                                 logger = console,
+                                 eventListener = ()=>{}
                                }) {
   assert(_.isFunction(veto));
-  assert(_.isFunction(logger0.log));
+  assert(_.isFunction(logger.log));
+  GEventListener = eventListener;
 
   setAsyncStorage(AsyncStorage);
   cacheFetch.fetch = fetch; //underlaying fetch function
   calcCacheKey.headersPopulator = headersPopulator;
 
   cacheFetch.veto = veto;
-  logger = logger0;
+  GLogger = logger;
   return cacheFetch;
 }
 
