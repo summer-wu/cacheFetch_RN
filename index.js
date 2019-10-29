@@ -10,6 +10,12 @@ let logger = null;
 
 //CacheKeysList is used to track all keys，it is useful when clear cache
 const KEY_fetchCacheKeysList = 'KEY_fetchCacheKeysList';
+const EVENT_WILL_saveCacheKeysList = 'EVENT_WILL_saveCacheKeysList'
+const EVENT_DID_saveCacheKeysList= 'EVENT_DID_saveCacheKeysList'
+const EVENT_WILL_calcCacheKey= 'EVENT_WILL_calcCacheKey'
+const EVENT_DID_calcCacheKey= 'EVENT_DID_calcCacheKey'
+const EVENT_GOTCACHE_WILL_Resolve = 'EVENT_GOTCACHE_WILL_Resolve'
+const EVENT_GOTNetwork_WILL_SaveCache = 'EVENT_GOTNetwork_WILL_SaveCache'
 
 const CacheKeysListManager = {
   latestKeysList: [], //always keep a newest version
@@ -43,7 +49,7 @@ const CacheKeysListManager = {
   async updateCacheKeysList(action, key) {
     assert(_.isString(action));
 
-    assert(action === 'append', action === 'delete', action === 'clear');
+    assert(action === 'append'|| action === 'delete'|| action === 'clear');
 
     //when update always read from disk
     const keysList = await CacheKeysListManager.getCacheKeysList();
@@ -106,6 +112,10 @@ const Converter = {
   },
 };
 
+function replaceAll(target, str, newstr) {
+  return target.replace(new RegExp(str, 'g'), newstr);
+}
+
 function calcCacheKey(input, init): string {
   assert(_.isObject(init));
   assert(_.isString(input));
@@ -127,7 +137,8 @@ function calcCacheKey(input, init): string {
     headersSum = String(headers);
   }
   const body = _.get(init, 'body');
-  const key = `${method}_${input}_${headersSum}_${sum(body)}`;
+  const url = replaceAll(input,'/','!')
+  const key = `${method}_${url}_${headersSum}_${sum(body)}`;
   return key;
 }
 
@@ -184,6 +195,7 @@ function cacheFetch(input, init = {}): Promise {
     log('cache exists,cacheKey=' + cacheKey);
     return new Promise((resolve, reject) => {
       getCacheValueWithKey(cacheKey).then((cacheValue) => {
+        // EVENT_GOTCACHE_WILL_Resolve
         const response = Converter.responseFromString(cacheValue);
         resolve(response);
       });
@@ -194,6 +206,7 @@ function cacheFetch(input, init = {}): Promise {
     log('cache not exists! cacheKey=' + cacheKey);
     return cacheFetch.fetch(input, init).then((response) => {
       if (response.ok) {
+        // EVENT_GOTNetwork_WILL_SaveCache
         Converter.stringFromReponse(response)
           .then((responseStr) => {
             saveCacheWithKeyValue(cacheKey, responseStr);
