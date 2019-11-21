@@ -24,11 +24,12 @@ const cacheFetch = makeCacheFetch({
   AsyncStorage: AsyncStorage,
   fetch: global.fetch,
   headersPopulator: headersPopulator,
-  logger0: console,
+  logger: console,
 });
+global.fetch = cacheFetch; //optional,if you want all fetch to be cacheFetch 
 ```
 
 # API
 + `clearFetchCache`, clear all cache
-+ `makeCacheFetch(AsyncStorage,veto,logger)`，veto is a function return boolean
++ `makeCacheFetch(...)`，see code for detail 
 

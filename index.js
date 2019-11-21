@@ -251,7 +251,7 @@ const defaultHeadersPopulator = (headers) => {
 // high order function,return cacheFetch
 // headersPopulator is only used when calcCacheKey
 // veto is a function: boolean veto(input,init)，return true means allow using cache，false means do not allow using cache
-// logger0 is a object,it contains a log function，defaults to console
+// logger is a object,it contains a log function，defaults to console
 // eventListener will be notified when event occur
 // return a function called cacheFetch
 export function makeCacheFetch({

@@ -1,6 +1,6 @@
 {
   "name": "cachefetch_rn",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "using AsyncStorage to cache fetch's response,only for RN,not for browser",
   "repository": {
     "type": "git",
